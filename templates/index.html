@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-center mb-8 text-indigo-600">Terms & Conditions Analyzer</h1>
+        
+        <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+            <div class="mb-6">
+                <label for="terms-input" class="block text-gray-700 text-sm font-bold mb-2">
+                    Paste your terms and conditions here:
+                </label>
+                <textarea id="terms-input" 
+                          class="w-full h-64 px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:shadow-outline"
+                          placeholder="Paste your terms and conditions text here..."></textarea>
+            </div>
+            
+            <div class="flex justify-center">
+                <button onclick="analyzeText()" 
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transform transition hover:scale-105">
+                    Analyze Text
+                </button>
+            </div>
+
+            <div id="loading" class="hidden mt-6 text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                <p class="mt-2 text-gray-600">Analyzing your text...</p>
+            </div>
+
+            <div id="results" class="hidden mt-6">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Analysis Results</h2>
+                
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-2 text-indigo-600">Simplified Version</h3>
+                    <div id="simplified-text" class="bg-gray-50 p-4 rounded-lg text-gray-700"></div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-2 text-indigo-600">Important Sections</h3>
+                    <ul id="important-sections" class="list-disc list-inside bg-gray-50 p-4 rounded-lg text-gray-700"></ul>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-semibold mb-2 text-indigo-600">Original Length</h3>
+                        <p id="original-length" class="text-gray-700"></p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-semibold mb-2 text-indigo-600">Number of Sentences</h3>
+                        <p id="num-sentences" class="text-gray-700"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function analyzeText() {
+            const text = document.getElementById('terms-input').value;
+            if (!text) {
+                alert('Please enter some text to analyze');
+                return;
+            }
+
+            // Show loading indicator
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text }),
+                });
+
+                const data = await response.json();
+                
+                // Update results
+                document.getElementById('simplified-text').textContent = data.simplified_text;
+                
+                const importantSectionsList = document.getElementById('important-sections');
+                importantSectionsList.innerHTML = '';
+                data.important_sections.forEach(section => {
+                    const li = document.createElement('li');
+                    li.textContent = section;
+                    importantSectionsList.appendChild(li);
+                });
+
+                document.getElementById('original-length').textContent = `${data.original_length} characters`;
+                document.getElementById('num-sentences').textContent = data.num_sentences;
+
+                // Show results
+                document.getElementById('results').classList.remove('hidden');
+            } catch (error) {
+                alert('An error occurred while analyzing the text. Please try again.');
+                console.error('Error:', error);
+            } finally {
+                // Hide loading indicator
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
